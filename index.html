@@ -515,7 +515,7 @@ async function run() {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-5',
-        max_tokens: 1400,
+        max_tokens: 2048,
         system: sys,
         messages: [{ role: 'user', content: `${dLabel}問題：${prob}` }]
       })
