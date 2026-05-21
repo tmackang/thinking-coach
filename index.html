@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深度思考教練 · QBQ × CTPS × McKinsey</title>
+<meta name="description" content="整合 QBQ、CTPS、McKinsey 三大框架，深度分析你的工作與生活問題">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600;700&family=DM+Mono:wght@300;400;500&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1410;
+    --paper: #f6f1e9;
+    --aged: #e8dfc8;
+    --rust: #b5451b;
+    --gold: #c9943a;
+    --sage: #4a6741;
+    --slate: #3d4f5c;
+    --muted: #8a7d6b;
+    --border: #cdc0a8;
+    --white: #ffffff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Noto Serif TC', serif;
+    min-height: 100vh;
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(246,241,233,0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; height: 52px;
+  }
+  .topbar-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px; font-weight: 700;
+    color: var(--ink);
+  }
+  .topbar-brand em { font-style: italic; color: var(--rust); }
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .key-indicator {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--muted);
+    display: flex; align-items: center; gap: 5px;
+  }
+  .key-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--border);
+    transition: background 0.3s;
+  }
+  .key-dot.set { background: var(--sage); }
+  .key-btn {
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    background: transparent;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 0.08em;
+    color: var(--muted); cursor: pointer;
+    border-radius: 3px; transition: all 0.2s;
+  }
+  .key-btn:hover { border-color: var(--ink); color: var(--ink); }
+
+  /* ── API Key Modal ── */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(26,20,16,0.6);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 32px;
+    width: 100%; max-width: 440px;
+    transform: translateY(10px);
+    transition: transform 0.2s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; margin-bottom: 8px;
+    color: var(--ink);
+  }
+  .modal p { font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 18px; }
+  .modal a { color: var(--rust); text-decoration: none; }
+  .modal a:hover { text-decoration: underline; }
+  .modal input[type="password"], .modal input[type="text"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px; color: var(--ink);
+    background: var(--paper);
+    outline: none; margin-bottom: 6px;
+  }
+  .modal input:focus { border-color: var(--gold); }
+  .modal-hint { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+  .modal-btns { display: flex; gap: 8px; }
+  .modal-save {
+    flex: 1; padding: 10px;
+    background: var(--ink); color: var(--paper);
+    border: none; border-radius: 3px;
+    font-family: 'Noto Serif TC', serif;
+    font-size: 13px; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .modal-save:hover { background: var(--rust); }
+  .modal-cancel {
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    border-radius: 3px; font-size: 13px; cursor: pointer;
+  }
+  .modal-err { font-size: 12px; color: var(--rust); margin-top: 6px; display: none; }
+
+  /* ── Hero ── */
+  .hero {
+    text-align: center;
+    padding: 56px 24px 40px;
+    border-bottom: 1px solid var(--border);
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--rust), var(--gold), var(--sage), var(--slate));
+  }
+  .hero-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; letter-spacing: 0.2em;
+    color: var(--muted); text-transform: uppercase; margin-bottom: 14px;
+  }
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(30px, 6vw, 52px);
+    font-weight: 700; line-height: 1.1;
+    color: var(--ink); margin-bottom: 14px;
+  }
+  .hero-title em { font-style: italic; color: var(--rust); }
+  .hero-desc { font-size: 14px; color: var(--muted); max-width: 420px; margin: 0 auto 20px; line-height: 1.7; }
+  .fw-pills { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+  .fw-pill {
+    padding: 5px 14px; border: 1px solid;
+    border-radius: 2px;
+    font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: 0.06em;
+  }
+  .pill-rust { border-color: var(--rust); color: var(--rust); background: rgba(181,69,27,0.06); }
+  .pill-sage { border-color: var(--sage); color: var(--sage); background: rgba(74,103,65,0.06); }
+  .pill-slate { border-color: var(--slate); color: var(--slate); background: rgba(61,79,92,0.06); }
+
+  /* ── Main container ── */
+  .wrap { max-width: 820px; margin: 0 auto; padding: 36px 24px 80px; }
+
+  /* ── No-key banner ── */
+  .no-key-banner {
+    background: rgba(201,148,58,0.1);
+    border: 1px solid rgba(201,148,58,0.4);
+    border-radius: 4px;
+    padding: 14px 18px; margin-bottom: 24px;
+    font-size: 13px; color: var(--ink);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .no-key-banner button {
+    padding: 6px 14px; background: var(--ink); color: var(--paper);
+    border: none; border-radius: 3px; font-size: 12px; cursor: pointer;
+    white-space: nowrap; margin-left: auto;
+  }
+  .no-key-banner button:hover { background: var(--rust); }
+
+  /* ── Input card ── */
+  .input-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 28px;
+    margin-bottom: 28px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+  }
+  .section-lbl {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; letter-spacing: 0.2em;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-lbl::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .domain-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+  .dtab {
+    padding: 7px 18px;
+    border: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    font-family: 'Noto Serif TC', serif;
+    font-size: 13px; cursor: pointer;
+    border-radius: 3px; transition: all 0.18s;
+  }
+  .dtab.on { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+  .dtab:hover:not(.on) { border-color: var(--ink); color: var(--ink); }
+  textarea {
+    width: 100%; min-height: 110px;
+    border: 1px solid var(--border);
+    border-radius: 3px; padding: 12px 14px;
+    font-family: 'Noto Serif TC', serif;
+    font-size: 14px; color: var(--ink);
+    background: var(--paper); resize: vertical;
+    outline: none; transition: border-color 0.2s;
+    line-height: 1.75;
+  }
+  textarea:focus { border-color: var(--gold); }
+  textarea::placeholder { color: var(--muted); font-style: italic; }
+  .err-msg { font-size: 13px; color: var(--rust); margin-top: 6px; display: none; }
+  .submit-btn {
+    margin-top: 14px; width: 100%; padding: 13px;
+    background: var(--ink); color: var(--paper);
+    border: none; border-radius: 3px;
+    font-family: 'Noto Serif TC', serif;
+    font-size: 14px; letter-spacing: 0.08em;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: background 0.2s;
+  }
+  .submit-btn:hover:not(:disabled) { background: var(--rust); }
+  .submit-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .spin {
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white; border-radius: 50%;
+    animation: sp 0.7s linear infinite; display: none;
+  }
+  .submit-btn.busy .spin { display: block; }
+  @keyframes sp { to { transform: rotate(360deg); } }
+
+  /* ── Results ── */
+  .results { display: none; animation: fadeUp 0.4s ease; }
+  .results.on { display: block; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+  .fb {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    margin-bottom: 18px;
+    overflow: hidden;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+  }
+  .fb-head {
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .fb-icon {
+    width: 34px; height: 34px; border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; flex-shrink: 0;
+  }
+  .fb-title { font-family: 'Playfair Display', serif; font-size: 16px; font-weight: 700; color: var(--ink); }
+  .fb-sub { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 1px; letter-spacing: 0.08em; }
+  .fb-body { padding: 18px 20px; font-size: 13.5px; line-height: 1.8; color: var(--ink); }
+  .lbl {
+    font-family: 'DM Mono', monospace; font-size: 10px;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted);
+    margin: 16px 0 7px;
+  }
+  .lbl:first-child { margin-top: 0; }
+  .hlt {
+    background: var(--paper); border-left: 3px solid var(--border);
+    padding: 9px 13px; font-size: 13px;
+    color: var(--slate); font-style: italic; margin: 4px 0;
+    border-radius: 0;
+  }
+  .hlt.strong { border-left-color: var(--rust); font-style: normal; font-size: 14px; font-weight: 600; }
+  ul.pts { list-style: none; padding: 0; }
+  ul.pts li {
+    padding: 5px 0 5px 16px; position: relative;
+    border-bottom: 1px dotted var(--aged); font-size: 13.5px;
+  }
+  ul.pts li:last-child { border-bottom: none; }
+  ul.pts li::before { content: '›'; position: absolute; left: 2px; color: var(--gold); font-weight: bold; }
+  .tag {
+    display: inline-block; font-family: 'DM Mono', monospace;
+    font-size: 10px; padding: 2px 7px; border-radius: 2px; margin-right: 5px;
+  }
+  .tag-rust { background: rgba(181,69,27,0.1); color: var(--rust); }
+  .tag-sage { background: rgba(74,103,65,0.1); color: var(--sage); }
+  .tag-slate { background: rgba(61,79,92,0.1); color: var(--slate); }
+  .tag-gold { background: rgba(201,148,58,0.1); color: var(--gold); }
+
+  .synth-head { background: var(--paper); }
+
+  .reset-btn {
+    padding: 9px 20px; border: 1px solid var(--border);
+    background: transparent; color: var(--muted);
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: 0.1em; cursor: pointer; border-radius: 3px;
+    transition: all 0.18s; text-transform: uppercase; margin-top: 4px;
+  }
+  .reset-btn:hover { border-color: var(--rust); color: var(--rust); }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center; padding: 28px 24px;
+    border-top: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--muted); letter-spacing: 0.12em;
+    line-height: 1.8;
+  }
+  .footer a { color: var(--muted); }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .hero { padding: 40px 16px 28px; }
+    .wrap { padding: 24px 16px 60px; }
+    .input-card { padding: 20px; }
+    .fb-body { padding: 14px 16px; }
+    .fb-head { padding: 12px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="topbar">
+  <div class="topbar-brand">深度思考<em>教練</em></div>
+  <div class="topbar-right">
+    <div class="key-indicator">
+      <div class="key-dot" id="keyDot"></div>
+      <span id="keyStatus">未設定 API Key</span>
+    </div>
+    <button class="key-btn" onclick="openModal()">設定 Key</button>
+  </div>
+</div>
+
+<!-- API Key Modal -->
+<div class="modal-overlay" id="modal" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <h2>設定 Anthropic API Key</h2>
+    <p>
+      你的 Key 只會存在你自己的瀏覽器（localStorage），不會上傳到任何伺服器。<br>
+      還沒有 Key？前往 <a href="https://console.anthropic.com/settings/keys" target="_blank">console.anthropic.com</a> 取得。
+    </p>
+    <input type="password" id="keyInput" placeholder="sk-ant-api03-..." autocomplete="off" />
+    <div class="modal-hint" id="keyHint"></div>
+    <div class="modal-btns">
+      <button class="modal-save" onclick="saveKey()">儲存並使用</button>
+      <button class="modal-cancel" onclick="closeModal()">取消</button>
+    </div>
+    <div class="modal-err" id="modalErr"></div>
+  </div>
+</div>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-label">問題背後的智慧 · 三框架整合分析</div>
+  <h1 class="hero-title">深度思考<em>教練</em></h1>
+  <p class="hero-desc">輸入工作或生活困境，同時從 QBQ、CTPS、McKinsey 三個維度拆解問題，找到真正的行動方向。</p>
+  <div class="fw-pills">
+    <span class="fw-pill pill-rust">QBQ 問題背後的問題</span>
+    <span class="fw-pill pill-sage">CTPS 李聖珉框架</span>
+    <span class="fw-pill pill-slate">McKinsey 問題解決法</span>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="wrap">
+
+  <!-- No key banner -->
+  <div class="no-key-banner" id="noKeyBanner">
+    <span>⚠️ 需要設定 Anthropic API Key 才能使用分析功能。</span>
+    <button onclick="openModal()">立即設定 →</button>
+  </div>
+
+  <!-- Input -->
+  <div class="input-card">
+    <div class="section-lbl">描述你的處境</div>
+    <div class="domain-tabs">
+      <button class="dtab on" onclick="setD('work',this)">💼 工作</button>
+      <button class="dtab" onclick="setD('life',this)">🌿 生活</button>
+    </div>
+    <textarea id="prob" placeholder="描述你目前面臨的困境、挑戰或困惑……&#10;&#10;例如：「團隊總是在最後一刻才說出問題，我很沮喪，不知道怎麼改善溝通」"></textarea>
+    <div class="err-msg" id="errMsg"></div>
+    <button class="submit-btn" id="submitBtn" onclick="run()">
+      <span class="spin"></span>
+      <span id="btnTxt">開始深度分析</span>
+    </button>
+  </div>
+
+  <!-- Results -->
+  <div class="results" id="results">
+    <div id="rc"></div>
+    <button class="reset-btn" onclick="resetForm()">↩ 分析新問題</button>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  深度思考教練 · QBQ × CTPS × McKinsey<br>
+  API Key 僅存於本機瀏覽器，不經過任何伺服器
+</div>
+
+<script>
+// ── Key management ──
+let apiKey = localStorage.getItem('coach_api_key') || '';
+let domain = 'work';
+
+function updateKeyUI() {
+  const dot = document.getElementById('keyDot');
+  const status = document.getElementById('keyStatus');
+  const banner = document.getElementById('noKeyBanner');
+  if (apiKey) {
+    dot.classList.add('set');
+    status.textContent = 'Key 已設定';
+    banner.style.display = 'none';
+  } else {
+    dot.classList.remove('set');
+    status.textContent = '未設定 API Key';
+    banner.style.display = 'flex';
+  }
+}
+
+function openModal() {
+  const modal = document.getElementById('modal');
+  const input = document.getElementById('keyInput');
+  if (apiKey) {
+    input.value = apiKey;
+    document.getElementById('keyHint').textContent = '目前已設定 Key（可直接覆蓋）';
+  } else {
+    input.value = '';
+    document.getElementById('keyHint').textContent = '';
+  }
+  document.getElementById('modalErr').style.display = 'none';
+  modal.classList.add('open');
+  setTimeout(() => input.focus(), 100);
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+function handleOverlayClick(e) {
+  if (e.target === document.getElementById('modal')) closeModal();
+}
+
+function saveKey() {
+  const val = document.getElementById('keyInput').value.trim();
+  if (!val.startsWith('sk-ant-')) {
+    const err = document.getElementById('modalErr');
+    err.textContent = 'Key 格式不正確，應以 sk-ant- 開頭';
+    err.style.display = 'block';
+    return;
+  }
+  apiKey = val;
+  localStorage.setItem('coach_api_key', val);
+  updateKeyUI();
+  closeModal();
+}
+
+// ── Domain toggle ──
+function setD(d, el) {
+  domain = d;
+  document.querySelectorAll('.dtab').forEach(t => t.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('prob').placeholder = d === 'work'
+    ? '描述你的工作困境……\n\n例如：「團隊總是在最後一刻才說出問題，我很沮喪，不知道怎麼改善溝通」'
+    : '描述你的生活困境……\n\n例如：「我每天都很忙碌，卻感覺生活沒有方向，不知道哪裡出了問題」';
+}
+
+// ── Main analysis ──
+async function run() {
+  const prob = document.getElementById('prob').value.trim();
+  const errEl = document.getElementById('errMsg');
+  errEl.style.display = 'none';
+
+  if (!apiKey) { openModal(); return; }
+  if (!prob) {
+    errEl.textContent = '請先描述你的問題 🙏';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.classList.add('busy');
+  document.getElementById('btnTxt').textContent = '深度分析中…';
+  document.getElementById('results').classList.remove('on');
+
+  const dLabel = domain === 'work' ? '工作' : '生活';
+  const sys = `你是整合三大框架的思考教練，用繁體中文分析${dLabel}問題。
+
+整合：
+【QBQ】停止問「為什麼/誰/什麼時候」，改問以「我」開頭含「如何/什麼」的問題，強調個人責任
+【CTPS】C批判性思考找盲點、T挖根源脈絡、P提可行方案、S長短期策略
+【McKinsey】MECE重新定義問題、問題樹拆解子問題、假設驅動、80/20找關鍵因素、優先行動
+
+只回傳JSON（不加markdown），格式：
+{"qbq":{"wrong_q":"使用者正在問的錯誤問題(1句)","right_q":"轉化後QBQ問題(2個，換行分隔)","insight":"核心洞察(1句)","action":"立即可做的具體行動(1個)"},"ctps":{"critical":"批判性思考找到的盲點(2點，換行分隔)","thinking":"問題根源(2點，換行分隔)","solving":"可行方案(3個，換行分隔)","strategic":"長期策略(1-2點，換行分隔)"},"mck":{"real":"MECE重新定義的核心問題(1句)","tree":["子問題1","子問題2","子問題3"],"driver":"80/20最關鍵因素(1句)","actions":["優先行動1","優先行動2","優先行動3"]},"syn":{"insight":"三框架共同洞見(2句)","next":"最重要下一步(具體1句)","reframe":"重新定義這問題的一句話"}}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1400,
+        system: sys,
+        messages: [{ role: 'user', content: `${dLabel}問題：${prob}` }]
+      })
+    });
+
+    if (res.status === 401) {
+      throw new Error('API Key 無效，請重新設定');
+    }
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error(body?.error?.message || `請求失敗 (${res.status})`);
+    }
+
+    const data = await res.json();
+    const raw = data.content.map(i => i.text || '').join('').replace(/```json|```/g, '').trim();
+    const r = JSON.parse(raw);
+    renderResults(r);
+
+  } catch(e) {
+    errEl.textContent = '錯誤：' + e.message;
+    errEl.style.display = 'block';
+    if (e.message.includes('API Key')) openModal();
+  } finally {
+    btn.disabled = false; btn.classList.remove('busy');
+    document.getElementById('btnTxt').textContent = '開始深度分析';
+  }
+}
+
+// ── Render ──
+function pts(str) {
+  return (str || '').split(/[\n·•]/).map(s => s.trim()).filter(Boolean).map(s => `<li>${s}</li>`).join('');
+}
+
+function renderResults(r) {
+  document.getElementById('rc').innerHTML = `
+    <div class="fb">
+      <div class="fb-head">
+        <div class="fb-icon" style="background:rgba(181,69,27,0.1)">❓</div>
+        <div>
+          <div class="fb-title">QBQ：問題背後的問題</div>
+          <div class="fb-sub">Question Behind the Question · 個人責任</div>
+        </div>
+      </div>
+      <div class="fb-body">
+        <div class="lbl">你正在問的問題</div>
+        <div class="hlt">「${r.qbq.wrong_q}」</div>
+        <div class="lbl">轉化後的 QBQ 問題</div>
+        <ul class="pts">${pts(r.qbq.right_q)}</ul>
+        <div class="lbl">核心洞察</div>
+        <p style="font-size:13.5px;margin:0 0 8px">${r.qbq.insight}</p>
+        <div class="lbl">立即行動</div>
+        <p style="font-size:13.5px;margin:0"><span class="tag tag-rust">ACTION</span>${r.qbq.action}</p>
+      </div>
+    </div>
+
+    <div class="fb">
+      <div class="fb-head">
+        <div class="fb-icon" style="background:rgba(74,103,65,0.1)">🧭</div>
+        <div>
+          <div class="fb-title">CTPS：批判性思考框架</div>
+          <div class="fb-sub">Critical · Thinking · Problem Solving · Strategic</div>
+        </div>
+      </div>
+      <div class="fb-body">
+        <div class="lbl">C — 你的盲點</div>
+        <ul class="pts">${pts(r.ctps.critical)}</ul>
+        <div class="lbl">T — 問題根源</div>
+        <ul class="pts">${pts(r.ctps.thinking)}</ul>
+        <div class="lbl">P — 可行方案</div>
+        <ul class="pts">${r.ctps.solving.split(/[\n·•]/).map(s=>s.trim()).filter(Boolean).map(s=>`<li><span class="tag tag-sage">方案</span>${s}</li>`).join('')}</ul>
+        <div class="lbl">S — 長期策略</div>
+        <ul class="pts">${pts(r.ctps.strategic)}</ul>
+      </div>
+    </div>
+
+    <div class="fb">
+      <div class="fb-head">
+        <div class="fb-icon" style="background:rgba(61,79,92,0.1)">📐</div>
+        <div>
+          <div class="fb-title">McKinsey：結構化問題解決</div>
+          <div class="fb-sub">MECE · Issue Tree · 80/20 · Hypothesis-Driven</div>
+        </div>
+      </div>
+      <div class="fb-body">
+        <div class="lbl">MECE 重新定義問題</div>
+        <div class="hlt">${r.mck.real}</div>
+        <div class="lbl">問題樹 Issue Tree</div>
+        <ul class="pts">${(r.mck.tree||[]).map(s=>`<li>${s}</li>`).join('')}</ul>
+        <div class="lbl">80/20 關鍵因素</div>
+        <p style="font-size:13.5px;margin:0 0 8px">⚡ ${r.mck.driver}</p>
+        <div class="lbl">優先行動建議</div>
+        <ul class="pts">${(r.mck.actions||[]).map((s,i)=>`<li><span class="tag tag-slate">P${i+1}</span>${s}</li>`).join('')}</ul>
+      </div>
+    </div>
+
+    <div class="fb">
+      <div class="fb-head synth-head">
+        <div class="fb-icon" style="background:rgba(201,148,58,0.1)">✦</div>
+        <div>
+          <div class="fb-title">三框架整合洞見</div>
+          <div class="fb-sub">Synthesis · 下一步行動</div>
+        </div>
+      </div>
+      <div class="fb-body">
+        <div class="lbl">共同指向的核心洞見</div>
+        <p style="font-size:13.5px;margin:0 0 10px">${r.syn.insight}</p>
+        <div class="lbl">重新定義這個問題</div>
+        <div class="hlt strong">「${r.syn.reframe}」</div>
+        <div class="lbl">最重要的下一步</div>
+        <p style="font-size:13.5px;margin:0"><span class="tag tag-gold">NEXT STEP</span>${r.syn.next}</p>
+      </div>
+    </div>
+  `;
+  document.getElementById('results').classList.add('on');
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function resetForm() {
+  document.getElementById('prob').value = '';
+  document.getElementById('results').classList.remove('on');
+  document.getElementById('rc').innerHTML = '';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Init
+updateKeyUI();
+</script>
+</body>
+</html>
